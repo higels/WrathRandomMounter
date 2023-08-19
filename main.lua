@@ -66,7 +66,7 @@ local function LocalizeMountName()
     --1:Name, 2:SpellID, 4:MaxSpeed, 5:MinSpeed, 6:SwimSpeed, 7:Category, 9:NormalMount, 10:AQMount
     --ridingSkill 75:0.6, 150:1, 225:1.5, 300:2.8, 375:3.1
     name, rank, icon, castTime, minRange, maxRange, spellID, originalIcon = GetSpellInfo(WrathRandomMounter.itemMounts
-    [mount][2])
+      [mount][2])
     WrathRandomMounter.itemMounts[mount][1] = name
   end
 end
@@ -289,8 +289,8 @@ local function UpdateMacro(groundMount, flyingMount, swimmingMount)
   --Join all the lines of the macro together
   --tooltip can be added after '#showtooltip' was removed due to consern about macro length exceeding 255 chars
   local body = "#showtooltip " ..
-  "\n/stopcasting" ..
-  groundMountString .. swimmingMountString .. flyingMountString .. groundMountString2 .. "\n/WRM" .. "\n/dismount"
+      "\n/stopcasting" ..
+      groundMountString .. swimmingMountString .. flyingMountString .. groundMountString2 .. "\n/WRM" .. "\n/dismount"
 
   --Save the macro
   macroIndex = GetMacroIndexByName("Mount")
@@ -698,12 +698,12 @@ local function WRMHandler(parameter)
         SaveMount(setType, splitParameter[tablelength(splitParameter)])
       else
         print("Set funtion needs to in format" ..
-        '"Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
+          '"Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
       end
     else
       print('Parameter was: ' .. parameter) --Print a list of valid command to the console
       print(
-      'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
+        'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
     end
   else --If no parameter was supplied update macro with new random mounts
     wrm_wait(0.1, UpdateMountMacro, false)
@@ -717,11 +717,11 @@ end
 local function WRPHandler(parameter)
   if (string.len(parameter) > 0) then --If a parameter was supplied
     if parameter == "list" then
-      PrintPets()                    --Prints players mounts to console
+      PrintPets()                     --Prints players mounts to console
     elseif parameter == "update" then
-      UpdateMyPets()                 --Rerun Startup to capture new pets
+      UpdateMyPets()                  --Rerun Startup to capture new pets
     elseif parameter == "debug" then
-      inDebugMode = not inDebugMode  --Change the debug state of the addon
+      inDebugMode = not inDebugMode   --Change the debug state of the addon
       print('DebugMode Changed to: ' .. tostring(inDebugMode))
     else
       print('Parameter was: ' .. parameter) --Print a list of valid command to the console
