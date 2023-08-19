@@ -11,7 +11,7 @@ local ridingSkill = 0
 
 --Variables to store player mounts
 local function GenerateBlankMountTable()
-  mountTable = {
+  local mountTable = {
     ["myGroundMounts"] = {},
     ["mySwiftGroundMounts"] = {},
     ["myFlyingMounts"] = {},
@@ -37,7 +37,7 @@ AllMounts = {}
 --mySuperSwiftFlyingMountsCategories
 --Variables to store player mount categories
 local function GenerateBlankMountCategoriesTable()
-  mountCategoriesTable = {
+  local mountCategoriesTable = {
     ["myGroundMountsCategories"] = {},
     ["mySwiftGroundMountsCategories"] = {},
     ["myFlyingMountsCategories"] = {},
@@ -67,7 +67,8 @@ local function LocalizeMountName()
   for mount in pairs(WrathRandomMounter.itemMounts) do --Loop over all possible mounts from Mounts.lua
     --1:Name, 2:SpellID, 4:MaxSpeed, 5:MinSpeed, 6:SwimSpeed, 7:Category, 9:NormalMount, 10:AQMount
     --ridingSkill 75:0.6, 150:1, 225:1.5, 300:2.8, 375:3.1
-    name, rank, icon, castTime, minRange, maxRange, spellID, originalIcon = GetSpellInfo(WrathRandomMounter.itemMounts
+    local name = GetSpellInfo(WrathRandomMounter
+      .itemMounts
       [mount][2])
     WrathRandomMounter.itemMounts[mount][1] = name
   end
@@ -82,16 +83,16 @@ end
 
 local function GetRidingSkill()
   --ridingSkill 75:0.6, 150:1, 225:1.5, 300:2.8, 375:3.1
-  if IsPlayerSpell(33388, false) then --75
+  if IsPlayerSpell(33388) then --75
     ridingSkill = 75
   end
-  if IsPlayerSpell(33391, false) then --150
+  if IsPlayerSpell(33391) then --150
     ridingSkill = 150
   end
-  if IsPlayerSpell(34090, false) then --225
+  if IsPlayerSpell(34090) then --225
     ridingSkill = 225
   end
-  if IsPlayerSpell(34091, false) then --300
+  if IsPlayerSpell(34091) then --300
     ridingSkill = 300
   end
 
@@ -110,7 +111,7 @@ function wrm_wait(delay, func, ...)
   end
   if (waitFrame == nil) then
     waitFrame = CreateFrame("Frame", "WaitFrame", UIParent);
-    waitFrame:SetScript("onUpdate", function(self, elapse)
+    waitFrame:SetScript("OnUpdate", function(self, elapse)
       local count = #waitTable;
       local i = 1;
       while (i <= count) do
@@ -303,11 +304,11 @@ local function UpdateMacro(groundMount, flyingMount, swimmingMount, specialPurpo
       flyingMountString .. groundMountString2 .. "\n/WRM" .. "\n/dismount"
 
   --Save the macro
-  macroIndex = GetMacroIndexByName("Mount")
+  local macroIndex = GetMacroIndexByName("Mount")
   if macroIndex == 0 then
     CreateMacro("Mount", "INV_MISC_QUESTIONMARK", body, nil)
   else
-    EditMacro("Mount", "Mount", nil, body, 1, 1)
+    EditMacro("Mount", "Mount", nil, body)
   end
 end
 
@@ -328,11 +329,11 @@ local function UpdatePetMacro(forceUpdate)
     end
 
     --Save the macro
-    macroIndex = GetMacroIndexByName("Pet")
+    local macroIndex = GetMacroIndexByName("Pet")
     if macroIndex == 0 then
       CreateMacro("Pet", "INV_MISC_QUESTIONMARK", body, nil)
     else
-      EditMacro("Pet", "Pet", nil, body, 1, 1)
+      EditMacro("Pet", "Pet", nil, body)
     end
   end
 end
