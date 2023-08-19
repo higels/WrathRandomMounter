@@ -17,7 +17,8 @@ local function GenerateBlankMountTable()
     ["myFlyingMounts"] = {},
     ["mySwiftFlyingMounts"] = {},
     ["mySuperSwiftFlyingMounts"] = {},
-    ["mySwimmingMounts"] = {}
+    ["mySwimmingMounts"] = {},
+    ["mySpecialPurposeMounts"] = {}
   }
   return mountTable
 end
@@ -42,7 +43,8 @@ local function GenerateBlankMountCategoriesTable()
     ["myFlyingMountsCategories"] = {},
     ["mySwiftFlyingMountsCategories"] = {},
     ["mySuperSwiftFlyingMountsCategories"] = {},
-    ["mySwimmingMountsCategories"] = {}
+    ["mySwimmingMountsCategories"] = {},
+    ["mySpecialPurposeMountsCategories"] = {}
   }
   return mountCategoriesTable
 end
@@ -239,6 +241,7 @@ local function GetRandomMounts()
   local swiftFlyingMount = GetRandomMount("mySwiftFlyingMounts")
   local superSwiftFlyingMount = GetRandomMount("mySuperSwiftFlyingMounts")
   local swimmingMount = GetRandomMount("mySwimmingMounts")
+  local specialPurposeMounts = GetRandomMount("mySpecialPurposeMounts")
 
   if superSwiftFlyingMount ~= nil then --replace SwiftFlying mount with SuperSwiftFlying mount if exists
     swiftFlyingMount = superSwiftFlyingMount
@@ -250,11 +253,11 @@ local function GetRandomMounts()
     groundMount = swiftGroundMount
   end
 
-  return groundMount, flyingMount, swimmingMount
+  return groundMount, flyingMount, swimmingMount, specialPurposeMounts
 end
 
 --Update ingame macro with the new groundMount, flyingMount, swimmingMount
-local function UpdateMacro(groundMount, flyingMount, swimmingMount)
+local function UpdateMacro(groundMount, flyingMount, swimmingMount, specialPurposeMount)
   --#showtooltip
   --/stopcasting
   --/cast [nomounted,mod:alt] GroundMount
@@ -268,6 +271,7 @@ local function UpdateMacro(groundMount, flyingMount, swimmingMount)
   local groundMountString2 = ""
   local flyingMountString = ""
   local swimmingMountString = ""
+  local specialPurposeMountString = ""
   local tooltip = ""
 
   --Get the correct string for the different lines of the macro
@@ -285,12 +289,18 @@ local function UpdateMacro(groundMount, flyingMount, swimmingMount)
   if swimmingMount ~= nil then
     swimmingMountString = "\n/cast [swimming] " .. tostring(swimmingMount)
   end
+  if specialPurposeMount ~= nil then
+    specialPurposeMountString = "\n/cast [nomounted,mod:shift] " .. tostring(specialPurposeMount)
+  end
 
   --Join all the lines of the macro together
   --tooltip can be added after '#showtooltip' was removed due to consern about macro length exceeding 255 chars
   local body = "#showtooltip " ..
       "\n/stopcasting" ..
-      groundMountString .. swimmingMountString .. flyingMountString .. groundMountString2 .. "\n/WRM" .. "\n/dismount"
+      specialPurposeMountString ..
+      groundMountString ..
+      swimmingMountString ..
+      flyingMountString .. groundMountString2 .. "\n/WRM" .. "\n/dismount"
 
   --Save the macro
   macroIndex = GetMacroIndexByName("Mount")
@@ -409,6 +419,11 @@ local function RecordMountCategories(mountTable, categoryTable)
       table.insert(categoryTable["mySwimmingMountsCategories"], mountCategory)
     end
   end
+  for mountCategory, mounts in pairs(mountTable["mySpecialPurposeMounts"]) do
+    if AllMountCategories[mountCategory] ~= 0 then
+      table.insert(categoryTable["mySpecialPurposeMountsCategories"], mountCategory)
+    end
+  end
 end
 
 --Updates the pet tables based on the companion API
@@ -517,6 +532,9 @@ local function UpdateMyMounts()
       if SwimSpeed > 0 then -- Swimming Mount
         AddMountMyMounts("mySwimmingMounts", Category, Mount, myCurrentMounts)
       end
+      if SpellID == 61425 or SpellID == 61447 then --Mammoths with vendors
+        AddMountMyMounts("mySpecialPurposeMounts", Category, Mount, myCurrentMounts)
+      end
     end
   end
 
@@ -575,9 +593,9 @@ local function GetCurrentZoneCategory()
 end
 
 local function UpdateMountMacro(forceUpdate)
-  local groundMount, flyingMount, swimmingMount = GetRandomMounts()
+  local groundMount, flyingMount, swimmingMount, specialPurposeMount = GetRandomMounts()
   if (not IsMounted() or forceUpdate) and not inCombat() then --Only update macro if player is not mounted and delay by 0.1s so macro is not being updated while it is being run.
-    UpdateMacro(groundMount, flyingMount, swimmingMount)
+    UpdateMacro(groundMount, flyingMount, swimmingMount, specialPurposeMount)
   end
 end
 
