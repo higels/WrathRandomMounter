@@ -6,6 +6,7 @@ local inDebugMode = false
 
 local mounted = IsMounted         -- make a local copy of the function and not the result of one execution
 local inCombat = InCombatLockdown -- make a local copy of the function and not the result of one execution
+local sprintf = string.format
 local CurrentZoneCategory = 'None'
 local ridingSkill = 0
 local ridingSpellSkillMap = { [33388] = 75, [33391] = 150, [34090] = 225, [34091] = 300 }
@@ -62,6 +63,13 @@ AllMountCategories = {}
 
 --Variables to store player pets
 local myPets = {}
+local mountMacroString = [[#showtooltip
+/stopcasting
+/cast %s%s%s
+/cast %s
+/WRM
+/dismount
+]]
 
 --Get Localized Mount Names
 local function LocalizeMountName()
@@ -253,50 +261,20 @@ end
 
 --Update ingame macro with the new groundMount, flyingMount, swimmingMount and vendorMount
 local function UpdateMacro(groundMount, flyingMount, swimmingMount, vendorMount)
-  --#showtooltip
-  --/stopcasting
-  --/cast [nomounted,mod:alt] GroundMount
-  --/cast [nomounted,swimming] SwimmingMount
-  --/cast [nomounted,flyable] FlyingMount
-  --/cast [nomounted] GroundMount
-  --/WRM
-  --/dismount
-
-  local groundMountString = ""
-  local groundMountString2 = ""
-  local flyingMountString = ""
-  local swimmingMountString = ""
-  local vendorMountString = ""
-  local tooltip = ""
-
-  --Get the correct string for the different lines of the macro
-  if groundMount ~= nil then
-    groundMountString = "\n/cast [nomounted,mod:alt] " .. tostring(groundMount)
-    groundMountString2 = "\n/cast [nomounted] " .. tostring(groundMount)
-    tooltip = tostring(groundMount)
-  end
-  if flyingMount ~= nil then
-    flyingMountString = "\n/cast [nomounted,flyable] " .. tostring(flyingMount)
-    if IsFlyableArea() then
-      tooltip = tostring(flyingMount)
-    end
-  end
-  if swimmingMount ~= nil then
-    swimmingMountString = "\n/cast [swimming] " .. tostring(swimmingMount)
-  end
-  if vendorMount ~= nil then
-    vendorMountString = "\n/cast [nomounted,mod:" ..
-        SavedVendorMountModkey .. "]" .. tostring(vendorMount)
-  end
+  local groundMountString = groundMount and sprintf("[nomounted][nomounted,mod:alt]%s;", groundMount) or ""
+  local flyingMountString = flyingMount and sprintf("[nomounted,flyable,nomod]%s;", flyingMount) or ""
+  local swimmingMountString = swimmingMount and sprintf("[swimming,nomod]%s;", swimmingMount) or ""
+  local vendorMountString = vendorMount and sprintf("[nomounted,mod:%s]%s;", SavedVendorMountModkey, vendorMount) or ""
 
   --Join all the lines of the macro together
-  --tooltip can be added after '#showtooltip' was removed due to consern about macro length exceeding 255 chars
-  local body = "#showtooltip " ..
-      "\n/stopcasting" ..
-      vendorMountString ..
-      groundMountString ..
-      swimmingMountString ..
-      flyingMountString .. groundMountString2 .. "\n/WRM" .. "\n/dismount"
+  local body = sprintf(mountMacroString, vendorMountString, swimmingMountString, flyingMountString, groundMountString)
+
+  if #body > 255 then
+    print("WRM macro Mount is " .. tostring(#body) .. " characters long so may not properly work!")
+  end
+  if inDebugMode then
+    print("WRM generated macro Mount of length" .. tostring(#body))
+  end
 
   --Save the macro
   local macroIndex = GetMacroIndexByName("Mount")
