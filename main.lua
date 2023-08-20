@@ -71,6 +71,11 @@ local mountMacroString = [[#showtooltip
 /dismount
 ]]
 
+local petMacroString = [[#showtooltip
+/cast %s
+/WRP
+]]
+
 --Get Localized Mount Names
 local function LocalizeMountName()
   for mount in pairs(WrathRandomMounter.itemMounts) do --Loop over all possible mounts from Mounts.lua
@@ -277,8 +282,7 @@ local function UpdateMacro(groundMount, flyingMount, swimmingMount, vendorMount)
   end
 
   --Save the macro
-  local macroIndex = GetMacroIndexByName("Mount")
-  if macroIndex == 0 then
+  if GetMacroIndexByName("Mount") == 0 then
     CreateMacro("Mount", "INV_MISC_QUESTIONMARK", body, nil)
   else
     EditMacro("Mount", "Mount", nil, body)
@@ -287,23 +291,12 @@ end
 
 --Update ingame macro with the new pet
 local function UpdatePetMacro(forceUpdate)
-  --#showtooltip
-  --/cast pet
-  --/WRP
-
   if not inCombat() then
     local pet = GetRandomPet()
-    local body = nil
-
-    if pet ~= nil then
-      body = "#showtooltip " .. "\n/cast " .. pet .. "\n/WRP"
-    else
-      body = "#showtooltip " .. "\n/WRP"
-    end
+    local body = pet and sprintf(petMacroString, pet) or "#showtooltip\n/WRP"
 
     --Save the macro
-    local macroIndex = GetMacroIndexByName("Pet")
-    if macroIndex == 0 then
+    if GetMacroIndexByName("Pet") == 0 then
       CreateMacro("Pet", "INV_MISC_QUESTIONMARK", body, nil)
     else
       EditMacro("Pet", "Pet", nil, body)
