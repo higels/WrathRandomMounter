@@ -109,9 +109,7 @@ local function GetRidingSkill()
     end
   end
 
-  if inDebugMode then
-    print("RidingSkill: " .. tostring(ridingSkill))
-  end
+  printDebug("RidingSkill: " .. tostring(ridingSkill))
 end
 
 --Create delay function
@@ -162,17 +160,19 @@ end
 --  end
 --end
 
-local function PrintMounts()
+local function GetMountsString()
   local orderedMounts = {}
+  local mountString = "Mounts..."
   for mountName in pairs(AllMounts) do
     table.insert(orderedMounts, mountName)
   end
   table.sort(orderedMounts)
 
-  print("Mounts...")
   for mountOrderID in pairs(orderedMounts) do
-    print(orderedMounts[mountOrderID] .. ": " .. tostring(AllMounts[orderedMounts[mountOrderID]]))
+    mountString = mountString ..
+        (orderedMounts[mountOrderID] .. ": " .. tostring(AllMounts[orderedMounts[mountOrderID]]))
   end
+  return mountString
 end
 
 local function PrintCategories()
@@ -188,18 +188,18 @@ local function PrintCategories()
   end
 end
 
-local function PrintPets()
+local function GetPetsString()
   local petString = nil
 
   for pet in pairs(myPets) do
     local petName = myPets[pet]
-    if petString == nil then
+    if not petString then
       petString = tostring(petName)
     else
       petString = petString .. ", " .. tostring(petName)
     end
   end
-  print("Pets: " .. tostring(petString))
+  return "Pets: " .. tostring(petString)
 end
 
 -- Returns a mount string that is of type mountType
@@ -283,9 +283,7 @@ local function UpdateMacro(groundMount, flyingMount, swimmingMount, vendorMount)
   if #body > 255 then
     print("WRM macro Mount is " .. tostring(#body) .. " characters long so may not properly work!")
   end
-  if inDebugMode then
-    print("WRM generated macro Mount of length" .. tostring(#body))
-  end
+  printDebug("WRM generated macro Mount of length" .. tostring(#body))
 
   --Save the macro
   if GetMacroIndexByName("Mount") == 0 then
@@ -410,10 +408,6 @@ local function UpdateMyPets()
   while numPets > 0 do
     local creatureID, creatureName, creatureSpellID, icon, issummoned, petType = GetCompanionInfo(companionType,
       petCounter)
-    if inDebugMode then
-      --print("PetSpellID: " .. creatureSpellID)
-      --print("PetName: " .. creatureName)
-    end
     table.insert(PetsKnown, { creatureSpellID, creatureName })
     numPets = numPets - 1
   end
@@ -422,10 +416,8 @@ local function UpdateMyPets()
   for pet in pairs(PetsKnown) do                                   --Loop over all possible pets from Pets.lua
     --1:PetName, 2:PetCategory
     Pet = WrathRandomMounter.itemPets[tostring(PetsKnown[pet][1])] --Table off all the pet data
-    if inDebugMode then
-      print("Pet: " .. tostring(PetsKnown[pet][1] .. ", " .. tostring(PetsKnown[pet][2])))
-      print("Pet Table: " .. tostring(Pet))
-    end
+    printDebug("Pet: " .. tostring(PetsKnown[pet][1] .. ", " .. tostring(PetsKnown[pet][2])))
+    printDebug("Pet Table: " .. tostring(Pet))
 
     SpellID = nil
     PetName = nil
@@ -440,16 +432,12 @@ local function UpdateMyPets()
       PetCategory = "None"
     end
 
-    if inDebugMode then
-      print("Petnaem: " .. tostring(PetName))
-    end
+    printDebug("Petnaem: " .. tostring(PetName))
 
     table.insert(myPets, PetName)
   end
 
-  if inDebugMode then
-    PrintPets()
-  end
+  printDebug(GetPetsString())
 end
 
 --Updates the mount tables based on the companion API
@@ -545,9 +533,7 @@ local function UpdateMyMounts()
     myCurrentMountsCategories = myMountsCategoriesSets["myMountsCategories"]
   end
 
-  if inDebugMode then
-    PrintMounts()
-  end
+  printDebug(GetMountsString())
 end
 
 local function GetCurrentZoneCategory()
@@ -557,10 +543,8 @@ local function GetCurrentZoneCategory()
     zoneCategory = 'None'
   end
 
-  if inDebugMode then
-    print("Current Zone: " .. zoneText)
-    print("Current Zone Category: " .. zoneCategory)
-  end
+  printDebug("Current Zone: " .. zoneText)
+  printDebug("Current Zone Category: " .. zoneCategory)
 
   return zoneCategory
 end
@@ -690,55 +674,53 @@ end
 --Captures console commands that are entered
 --/wrm Set Category Glider 0
 local function WRMHandler(parameter)
-  if (string.len(parameter) > 0) then --If a parameter was supplied
-    local parameterLower = string.lower(parameter)
-    if parameterLower == "list" then
-      PrintMounts() --Prints players mounts to console
-    elseif parameterLower == "listcategories" then
-      PrintCategories()
-    elseif parameterLower == "update" then
-      InitialStartup()              --Rerun Startup to capture new mounts
-    elseif parameterLower == "debug" then
-      inDebugMode = not inDebugMode --Change the debug state of the addon
-      print('DebugMode Changed to: ' .. tostring(inDebugMode))
-    elseif parameterLower == "zone" then
-      print('Current Zone Category: ' .. CurrentZoneCategory)
-    elseif stringStarts(parameterLower, "set") then
-      local splitParameter = splitString(parameter)
-      if string.lower(splitParameter[2]) == "category" then
-        local setType = string.sub(parameter, 13, string.len(parameter)) --"Set Category"
-        setType = string.gsub(setType, splitParameter[tablelength(splitParameter)], "")
-        setType = string.gsub(setType, '^%s*(.-)%s*$', '%1')
-
-        SaveCategory(setType, splitParameter[tablelength(splitParameter)])
-      elseif string.lower(splitParameter[2]) == "mount" then
-        local setType = string.sub(parameter, 10, string.len(parameter)) --"Set Mount"
-        setType = string.gsub(setType, splitParameter[tablelength(splitParameter)], "")
-        setType = string.gsub(setType, '^%s*(.-)%s*$', '%1')
-
-        SaveMount(setType, splitParameter[tablelength(splitParameter)])
-      else
-        print("Set funtion needs to in format" ..
-          '"Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
-      end
-    else
-      print('Parameter was: ' .. parameter) --Print a list of valid command to the console
-      print(
-        'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
-    end
-  else --If no parameter was supplied update macro with new random mounts
+  if not parameter then
     wrmWait(0.1, UpdateMountMacro, false)
+    return
+  end
+  local parameterLower = string.lower(parameter)
+  if parameterLower == "list" then
+    print(GetMountsString()) --Prints players mounts to console
+  elseif parameterLower == "listcategories" then
+    PrintCategories()
+  elseif parameterLower == "update" then
+    InitialStartup()              --Rerun Startup to capture new mounts
+  elseif parameterLower == "debug" then
+    inDebugMode = not inDebugMode --Change the debug state of the addon
+    print('DebugMode Changed to: ' .. tostring(inDebugMode))
+  elseif parameterLower == "zone" then
+    print('Current Zone Category: ' .. CurrentZoneCategory)
+  elseif stringStarts(parameterLower, "set") then
+    local splitParameter = splitString(parameter)
+    if string.lower(splitParameter[2]) == "category" then
+      local setType = string.sub(parameter, 13, string.len(parameter)) --"Set Category"
+      setType = string.gsub(setType, splitParameter[tablelength(splitParameter)], "")
+      setType = string.gsub(setType, '^%s*(.-)%s*$', '%1')
+
+      SaveCategory(setType, splitParameter[tablelength(splitParameter)])
+    elseif string.lower(splitParameter[2]) == "mount" then
+      local setType = string.sub(parameter, 10, string.len(parameter)) --"Set Mount"
+      setType = string.gsub(setType, splitParameter[tablelength(splitParameter)], "")
+      setType = string.gsub(setType, '^%s*(.-)%s*$', '%1')
+
+      SaveMount(setType, splitParameter[tablelength(splitParameter)])
+    else
+      print("Set funtion needs to in format" ..
+        '"Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
+    end
+  else
+    print('Parameter was: ' .. parameter) --Print a list of valid command to the console
+    print(
+      'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
   end
 
-  if inDebugMode then
-    print("WRM was called with parameter: " .. parameter)
-  end
+  printDebug("WRM was called with parameter: " .. parameter)
 end
 
 local function WRPHandler(parameter)
   if (string.len(parameter) > 0) then --If a parameter was supplied
     if parameter == "list" then
-      PrintPets()                     --Prints players mounts to console
+      print(GetPetsString())          --Prints players mounts to console
     elseif parameter == "update" then
       UpdateMyPets()                  --Rerun Startup to capture new pets
     elseif parameter == "debug" then
@@ -752,9 +734,7 @@ local function WRPHandler(parameter)
     wrmWait(0.1, UpdatePetMacro, false)
   end
 
-  if inDebugMode then
-    print("WRP was called with parameter: " .. parameter)
-  end
+  printDebug("WRP was called with parameter: " .. parameter)
 end
 
 --Handles the changing zone event
@@ -774,9 +754,7 @@ local function ZoneChangeHandler(self, event, ...)
     UpdateMountMacro(false)
   end
 
-  if inDebugMode then
-    print("Zone Category Now: " .. zoneCategory)
-  end
+  printDebug("Zone Category Now: " .. zoneCategory)
 end
 
 
