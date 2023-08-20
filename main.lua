@@ -4,6 +4,12 @@ SLASH_WRM1 = "/WRM"
 SLASH_WRP1 = "/WRP"
 local inDebugMode = false
 
+local function printDebug(debugStr)
+  if inDebugMode then
+    print(debugStr)
+  end
+end
+
 local mounted = IsMounted         -- make a local copy of the function and not the result of one execution
 local inCombat = InCombatLockdown -- make a local copy of the function and not the result of one execution
 local sprintf = string.format
@@ -399,18 +405,17 @@ local function UpdateMyPets()
 
   -- Get pets from the companion API
   PetsKnown = {}                                  --Stores the API pets
-  CompanionType = "CRITTER"
-  local numPets = GetNumCompanions(CompanionType) --total number of API pets
-  local petCounter = 1                            --loop counter
-  while petCounter <= numPets do
-    local creatureID, creatureName, creatureSpellID, icon, issummoned, petType = GetCompanionInfo(CompanionType,
+  local companionType = "CRITTER"
+  local numPets = GetNumCompanions(companionType) --total number of API pets
+  while numPets > 0 do
+    local creatureID, creatureName, creatureSpellID, icon, issummoned, petType = GetCompanionInfo(companionType,
       petCounter)
     if inDebugMode then
       --print("PetSpellID: " .. creatureSpellID)
       --print("PetName: " .. creatureName)
     end
     table.insert(PetsKnown, { creatureSpellID, creatureName })
-    petCounter = petCounter + 1
+    numPets = numPets - 1
   end
 
   -- Get additional pet data from Pets.lua
@@ -422,11 +427,10 @@ local function UpdateMyPets()
       print("Pet Table: " .. tostring(Pet))
     end
 
-
     SpellID = nil
     PetName = nil
     PetCategory = nil
-    if Pet ~= nil then
+    if Pet then
       SpellID = pet
       PetName = Pet[1]
       PetCategory = Pet[2]
