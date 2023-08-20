@@ -671,6 +671,13 @@ local function SaveMount(mountName, mountValue)
   InitialStartup()
 end
 
+local wrmHandlerMap = {
+  list = function() print(GetMountsString()) end,
+  listcategories = PrintCategories,
+  update = InitialStartup,
+  debug = function() inDebugMode = not inDebugMode print('DebugMode is now ' .. inDebugMode) end,
+  zone = function() print('Current Zone Category: ' .. CurrentZoneCategory) end,
+}
 --Captures console commands that are entered
 --/wrm Set Category Glider 0
 local function WRMHandler(parameter)
@@ -679,41 +686,29 @@ local function WRMHandler(parameter)
     return
   end
   local parameterLower = string.lower(parameter)
-  if parameterLower == "list" then
-    print(GetMountsString()) --Prints players mounts to console
-  elseif parameterLower == "listcategories" then
-    PrintCategories()
-  elseif parameterLower == "update" then
-    InitialStartup()              --Rerun Startup to capture new mounts
-  elseif parameterLower == "debug" then
-    inDebugMode = not inDebugMode --Change the debug state of the addon
-    print('DebugMode Changed to: ' .. tostring(inDebugMode))
-  elseif parameterLower == "zone" then
-    print('Current Zone Category: ' .. CurrentZoneCategory)
-  elseif stringStarts(parameterLower, "set") then
-    local splitParameter = splitString(parameter)
-    if string.lower(splitParameter[2]) == "category" then
-      local setType = string.sub(parameter, 13, string.len(parameter)) --"Set Category"
-      setType = string.gsub(setType, splitParameter[tablelength(splitParameter)], "")
-      setType = string.gsub(setType, '^%s*(.-)%s*$', '%1')
-
-      SaveCategory(setType, splitParameter[tablelength(splitParameter)])
-    elseif string.lower(splitParameter[2]) == "mount" then
-      local setType = string.sub(parameter, 10, string.len(parameter)) --"Set Mount"
-      setType = string.gsub(setType, splitParameter[tablelength(splitParameter)], "")
-      setType = string.gsub(setType, '^%s*(.-)%s*$', '%1')
-
-      SaveMount(setType, splitParameter[tablelength(splitParameter)])
-    else
+  if wrmHandlerMap[parameterLower] then
+    wrmHandlerMap[parameterLower]()
+  else
+    local lcSplitParamss = splitString(string.lower(parameter))
+    local splitParams = splitString(parameter)
+    if lcSplitParamss[1] ~= "set" then
+      print('Parameter was: ' .. parameter) --Print a list of valid command to the console
+      print(
+        'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
+      return
+    end
+    if lcSplitParamss[1] == "set" and #lcSplitParamss ~= 4 and (lcSplitParamss[2] ~= "category" or lcSplitParamss[2] ~= "mount") then
       print("Set funtion needs to in format" ..
         '"Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
+      return
     end
-  else
-    print('Parameter was: ' .. parameter) --Print a list of valid command to the console
-    print(
-      'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
-  end
 
+    if lcSplitParamss[1] == "set" and lcSplitParamss[2] == "category" then
+      SaveCategory(splitParams[3], splitParams[4])
+    elseif lcSplitParamss[1] == "set" and lcSplitParamss[2] == "mount" then
+      SaveMount(splitParams[3], splitParams[4])
+    end
+  end
   printDebug("WRM was called with parameter: " .. parameter)
 end
 
