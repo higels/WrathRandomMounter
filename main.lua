@@ -16,6 +16,10 @@ local sprintf = string.format
 local CurrentZoneCategory = 'None'
 local ridingSkill = 0
 local ridingSpellSkillMap = { [33388] = 75, [33391] = 150, [34090] = 225, [34091] = 300 }
+local wrmUsage =
+'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"'
+local wrmSetUsage = "Set funtion needs to in format" ..
+    '"Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"'
 
 --Variables to store player mounts
 local function GenerateBlankMountTable()
@@ -539,10 +543,7 @@ end
 local function GetCurrentZoneCategory()
   local zoneText = GetZoneText()
   local zoneCategory = WrathRandomMounter.itemZones[zoneText]
-  if zoneCategory == nil then
-    zoneCategory = 'None'
-  end
-
+  zoneCategory = zoneCategory or 'None'
   printDebug("Current Zone: " .. zoneText)
   printDebug("Current Zone Category: " .. zoneCategory)
 
@@ -614,10 +615,6 @@ local function InitialStartupHandler(self, event, ...)
   wrmWait(10, InitialStartup, self, event, ...) --Reruns startup incase parts of the API had not started yet (Updating Macros can fail if called too early)
 end
 
-local function stringStarts(String, Start)
-  return string.sub(String, 1, string.len(Start)) == Start
-end
-
 local function splitString(stringToSplit)
   local sep = "%s"
   local t = {}
@@ -675,7 +672,10 @@ local wrmHandlerMap = {
   list = function() print(GetMountsString()) end,
   listcategories = PrintCategories,
   update = InitialStartup,
-  debug = function() inDebugMode = not inDebugMode print('DebugMode is now ' .. inDebugMode) end,
+  debug = function()
+    inDebugMode = not inDebugMode
+    print('DebugMode is now ' .. inDebugMode)
+  end,
   zone = function() print('Current Zone Category: ' .. CurrentZoneCategory) end,
 }
 --Captures console commands that are entered
@@ -685,21 +685,22 @@ local function WRMHandler(parameter)
     wrmWait(0.1, UpdateMountMacro, false)
     return
   end
+
   local parameterLower = string.lower(parameter)
   if wrmHandlerMap[parameterLower] then
     wrmHandlerMap[parameterLower]()
+    return
   else
     local lcSplitParamss = splitString(string.lower(parameter))
     local splitParams = splitString(parameter)
     if lcSplitParamss[1] ~= "set" then
       print('Parameter was: ' .. parameter) --Print a list of valid command to the console
-      print(
-        'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
+      print(wrmUsage)
       return
     end
+
     if lcSplitParamss[1] == "set" and #lcSplitParamss ~= 4 and (lcSplitParamss[2] ~= "category" or lcSplitParamss[2] ~= "mount") then
-      print("Set funtion needs to in format" ..
-        '"Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
+      print(wrmSetUsage)
       return
     end
 
