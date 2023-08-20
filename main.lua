@@ -485,14 +485,14 @@ local function UpdateMyMounts()
   myMountsCategoriesSets["myAQMountsCategories"] = GenerateBlankMountCategoriesTable()
 
   -- Get mounts from the companion API
-  MountsKnown = {}                                  --Stores the API mounts
-  CompanionType = "MOUNT"
-  local numMounts = GetNumCompanions(CompanionType) --total number of API mounts
+  local mountsKnown = {}                            --Stores the API mounts
+  local companionType = "MOUNT"
+  local numMounts = GetNumCompanions(companionType) --total number of API mounts
   local mountCounter = 1                            --loop counter
   while mountCounter <= numMounts do
-    local creatureID, creatureName, creatureSpellID, icon, issummoned, mountType = GetCompanionInfo(CompanionType,
+    local creatureID, creatureName, creatureSpellID, icon, issummoned, mountType = GetCompanionInfo(companionType,
       mountCounter)
-    table.insert(MountsKnown, creatureSpellID)
+    table.insert(mountsKnown, creatureSpellID)
     mountCounter = mountCounter + 1
   end
 
@@ -509,7 +509,7 @@ local function UpdateMyMounts()
     NormalMount = Mount[9]
     AQMount = Mount[10]
 
-    if tableContains(MountsKnown, SpellID) then --Check if player has mount
+    if tableContains(mountsKnown, SpellID) then --Check if player has mount
       --print("SpellID: " .. SpellID)
       --print("RidingSkill: " .. ridingSkill)
       if MinSpeed <= 1 and ridingSkill >= 75 then --Ground Mount
@@ -651,7 +651,7 @@ end
 local function InitialStartupHandler(self, event, ...)
   InitialStartupOfSavedVariables()
   CreateInterfaceOptionFrame()
-  InitialStartup(self, event, ...)               --Gets the addon into a usable state
+  InitialStartup(self, event, ...)              --Gets the addon into a usable state
   wrmWait(10, InitialStartup, self, event, ...) --Reruns startup incase parts of the API had not started yet (Updating Macros can fail if called too early)
 end
 
