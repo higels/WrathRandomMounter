@@ -8,6 +8,7 @@ local mounted = IsMounted         -- make a local copy of the function and not t
 local inCombat = InCombatLockdown -- make a local copy of the function and not the result of one execution
 local CurrentZoneCategory = 'None'
 local ridingSkill = 0
+local ridingSpellSkillMap = { [33388] = 75, [33391] = 150, [34090] = 225, [34091] = 300 }
 
 --Variables to store player mounts
 local function GenerateBlankMountTable()
@@ -83,17 +84,10 @@ end
 
 local function GetRidingSkill()
   --ridingSkill 75:0.6, 150:1, 225:1.5, 300:2.8, 375:3.1
-  if IsPlayerSpell(33388) then --75
-    ridingSkill = 75
-  end
-  if IsPlayerSpell(33391) then --150
-    ridingSkill = 150
-  end
-  if IsPlayerSpell(34090) then --225
-    ridingSkill = 225
-  end
-  if IsPlayerSpell(34091) then --300
-    ridingSkill = 300
+  for k, v in pairs(ridingSpellSkillMap) do
+    if v > ridingSkill and IsPlayerSpell(k) then
+      ridingSkill = v
+    end
   end
 
   if inDebugMode then
@@ -105,7 +99,7 @@ end
 local waitTable = {};
 local waitFrame = nil;
 
-function wrm_wait(delay, func, ...)
+local function wrmWait(delay, func, ...)
   if (type(delay) ~= "number" or type(func) ~= "function") then
     return false;
   end
@@ -658,7 +652,7 @@ local function InitialStartupHandler(self, event, ...)
   InitialStartupOfSavedVariables()
   CreateInterfaceOptionFrame()
   InitialStartup(self, event, ...)               --Gets the addon into a usable state
-  wrm_wait(10, InitialStartup, self, event, ...) --Reruns startup incase parts of the API had not started yet (Updating Macros can fail if called too early)
+  wrmWait(10, InitialStartup, self, event, ...) --Reruns startup incase parts of the API had not started yet (Updating Macros can fail if called too early)
 end
 
 local function stringStarts(String, Start)
@@ -758,7 +752,7 @@ local function WRMHandler(parameter)
         'Accepted Parameters are: "list", "listCategories", "update", "debug", "zone", "Set Mount [MountName] [Weight]", "Set Category [CategoryName] [Weight]"')
     end
   else --If no parameter was supplied update macro with new random mounts
-    wrm_wait(0.1, UpdateMountMacro, false)
+    wrmWait(0.1, UpdateMountMacro, false)
   end
 
   if inDebugMode then
@@ -780,7 +774,7 @@ local function WRPHandler(parameter)
       print('Accepted Parameters are: "list", "update", "debug"')
     end
   else --If no parameter was supplied update macro with new random pets
-    wrm_wait(0.1, UpdatePetMacro, false)
+    wrmWait(0.1, UpdatePetMacro, false)
   end
 
   if inDebugMode then
