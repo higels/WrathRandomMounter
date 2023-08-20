@@ -18,7 +18,7 @@ local function GenerateBlankMountTable()
     ["mySwiftFlyingMounts"] = {},
     ["mySuperSwiftFlyingMounts"] = {},
     ["mySwimmingMounts"] = {},
-    ["mySpecialPurposeMounts"] = {}
+    ["myVendorMounts"] = {}
   }
   return mountTable
 end
@@ -44,7 +44,7 @@ local function GenerateBlankMountCategoriesTable()
     ["mySwiftFlyingMountsCategories"] = {},
     ["mySuperSwiftFlyingMountsCategories"] = {},
     ["mySwimmingMountsCategories"] = {},
-    ["mySpecialPurposeMountsCategories"] = {}
+    ["myVendorMountsCategories"] = {}
   }
   return mountCategoriesTable
 end
@@ -150,7 +150,7 @@ end
 --end
 
 local function PrintMounts()
-  orderedMounts = {}
+  local orderedMounts = {}
   for mountName in pairs(AllMounts) do
     table.insert(orderedMounts, mountName)
   end
@@ -163,7 +163,7 @@ local function PrintMounts()
 end
 
 local function PrintCategories()
-  orderedCategories = {}
+  local orderedCategories = {}
   for categoryName in pairs(AllMountCategories) do
     table.insert(orderedCategories, categoryName)
   end
@@ -179,7 +179,7 @@ local function PrintPets()
   local petString = nil
 
   for pet in pairs(myPets) do
-    petName = myPets[pet]
+    local petName = myPets[pet]
     if petString == nil then
       petString = tostring(petName)
     else
@@ -203,7 +203,7 @@ local function GetRandomMount(mountType)
     --Get the category string
     CategoryName = myCurrentMountsCategories[mountTypeCategory][CategoryId]
 
-    mountList = {}
+    local mountList = {}
     for mountKey, mount in pairs(myCurrentMounts[mountType][CategoryName]) do
       if AllMounts[mount[1]] == 1 then
         table.insert(mountList, mount[1])
@@ -242,7 +242,7 @@ local function GetRandomMounts()
   local swiftFlyingMount = GetRandomMount("mySwiftFlyingMounts")
   local superSwiftFlyingMount = GetRandomMount("mySuperSwiftFlyingMounts")
   local swimmingMount = GetRandomMount("mySwimmingMounts")
-  local specialPurposeMounts = GetRandomMount("mySpecialPurposeMounts")
+  local vendorMounts = GetRandomMount("myVendorMounts")
 
   if superSwiftFlyingMount ~= nil then --replace SwiftFlying mount with SuperSwiftFlying mount if exists
     swiftFlyingMount = superSwiftFlyingMount
@@ -254,11 +254,11 @@ local function GetRandomMounts()
     groundMount = swiftGroundMount
   end
 
-  return groundMount, flyingMount, swimmingMount, specialPurposeMounts
+  return groundMount, flyingMount, swimmingMount, vendorMounts
 end
 
---Update ingame macro with the new groundMount, flyingMount, swimmingMount
-local function UpdateMacro(groundMount, flyingMount, swimmingMount, specialPurposeMount)
+--Update ingame macro with the new groundMount, flyingMount, swimmingMount and vendorMount
+local function UpdateMacro(groundMount, flyingMount, swimmingMount, vendorMount)
   --#showtooltip
   --/stopcasting
   --/cast [nomounted,mod:alt] GroundMount
@@ -272,7 +272,7 @@ local function UpdateMacro(groundMount, flyingMount, swimmingMount, specialPurpo
   local groundMountString2 = ""
   local flyingMountString = ""
   local swimmingMountString = ""
-  local specialPurposeMountString = ""
+  local vendorMountString = ""
   local tooltip = ""
 
   --Get the correct string for the different lines of the macro
@@ -290,15 +290,16 @@ local function UpdateMacro(groundMount, flyingMount, swimmingMount, specialPurpo
   if swimmingMount ~= nil then
     swimmingMountString = "\n/cast [swimming] " .. tostring(swimmingMount)
   end
-  if specialPurposeMount ~= nil then
-    specialPurposeMountString = "\n/cast [nomounted,mod:shift] " .. tostring(specialPurposeMount)
+  if vendorMount ~= nil then
+    vendorMountString = "\n/cast [nomounted,mod:" ..
+        SavedVendorMountModkey .. "]" .. tostring(vendorMount)
   end
 
   --Join all the lines of the macro together
   --tooltip can be added after '#showtooltip' was removed due to consern about macro length exceeding 255 chars
   local body = "#showtooltip " ..
       "\n/stopcasting" ..
-      specialPurposeMountString ..
+      vendorMountString ..
       groundMountString ..
       swimmingMountString ..
       flyingMountString .. groundMountString2 .. "\n/WRM" .. "\n/dismount"
@@ -361,7 +362,7 @@ local function GetAllMounts(mountTable, mountList)
   for mountType in pairs(myCurrentMounts) do
     for category in pairs(myCurrentMounts[mountType]) do
       for mount in pairs(myCurrentMounts[mountType][category]) do
-        mountName = myCurrentMounts[mountType][category][mount][1]
+        local mountName = myCurrentMounts[mountType][category][mount][1]
         if mountList[mountName] == nil then
           if SavedMountWeights[mountName] == nil then
             mountList[mountName] = 1
@@ -420,9 +421,9 @@ local function RecordMountCategories(mountTable, categoryTable)
       table.insert(categoryTable["mySwimmingMountsCategories"], mountCategory)
     end
   end
-  for mountCategory, mounts in pairs(mountTable["mySpecialPurposeMounts"]) do
+  for mountCategory, mounts in pairs(mountTable["myVendorMounts"]) do
     if AllMountCategories[mountCategory] ~= 0 then
-      table.insert(categoryTable["mySpecialPurposeMountsCategories"], mountCategory)
+      table.insert(categoryTable["myVendorMountsCategories"], mountCategory)
     end
   end
 end
@@ -432,12 +433,13 @@ local function UpdateMyPets()
   myPets = {}
 
   -- Get pets from the companion API
-  PetsKnown = {}                            --Stores the API pets
+  PetsKnown = {}                                  --Stores the API pets
   CompanionType = "CRITTER"
-  numPets = GetNumCompanions(CompanionType) --total number of API pets
-  petCounter = 1                            --loop counter
+  local numPets = GetNumCompanions(CompanionType) --total number of API pets
+  local petCounter = 1                            --loop counter
   while petCounter <= numPets do
-    creatureID, creatureName, creatureSpellID, icon, issummoned, petType = GetCompanionInfo(CompanionType, petCounter)
+    local creatureID, creatureName, creatureSpellID, icon, issummoned, petType = GetCompanionInfo(CompanionType,
+      petCounter)
     if inDebugMode then
       --print("PetSpellID: " .. creatureSpellID)
       --print("PetName: " .. creatureName)
@@ -489,12 +491,13 @@ local function UpdateMyMounts()
   myMountsCategoriesSets["myAQMountsCategories"] = GenerateBlankMountCategoriesTable()
 
   -- Get mounts from the companion API
-  MountsKnown = {}                            --Stores the API mounts
+  MountsKnown = {}                                  --Stores the API mounts
   CompanionType = "MOUNT"
-  numMounts = GetNumCompanions(CompanionType) --total number of API mounts
-  mountCounter = 1                            --loop counter
+  local numMounts = GetNumCompanions(CompanionType) --total number of API mounts
+  local mountCounter = 1                            --loop counter
   while mountCounter <= numMounts do
-    creatureID, creatureName, creatureSpellID, icon, issummoned, mountType = GetCompanionInfo(CompanionType, mountCounter)
+    local creatureID, creatureName, creatureSpellID, icon, issummoned, mountType = GetCompanionInfo(CompanionType,
+      mountCounter)
     table.insert(MountsKnown, creatureSpellID)
     mountCounter = mountCounter + 1
   end
@@ -534,7 +537,7 @@ local function UpdateMyMounts()
         AddMountMyMounts("mySwimmingMounts", Category, Mount, myCurrentMounts)
       end
       if SpellID == 61425 or SpellID == 61447 then --Mammoths with vendors
-        AddMountMyMounts("mySpecialPurposeMounts", Category, Mount, myCurrentMounts)
+        AddMountMyMounts("myVendorMounts", Category, Mount, myCurrentMounts)
       end
     end
   end
@@ -594,9 +597,9 @@ local function GetCurrentZoneCategory()
 end
 
 local function UpdateMountMacro(forceUpdate)
-  local groundMount, flyingMount, swimmingMount, specialPurposeMount = GetRandomMounts()
+  local groundMount, flyingMount, swimmingMount, vendorMount = GetRandomMounts()
   if (not IsMounted() or forceUpdate) and not inCombat() then --Only update macro if player is not mounted and delay by 0.1s so macro is not being updated while it is being run.
-    UpdateMacro(groundMount, flyingMount, swimmingMount, specialPurposeMount)
+    UpdateMacro(groundMount, flyingMount, swimmingMount, vendorMount)
   end
 end
 
@@ -613,17 +616,47 @@ end
 
 --Changes saved variables from nil to empty lists
 local function InitialStartupOfSavedVariables()
-  if SavedMountWeights == nil then
-    SavedMountWeights = {}
+  SavedMountWeights = SavedMountWeights or {}
+  SavedMountCategoriesWeights = SavedMountCategoriesWeights or {}
+  SavedVendorMountModkey = SavedVendorMountModkey or "shift"
+end
+
+--Sets the modifier key to use to select vendor mounts
+local function SetVendorModkey(modkeyMenu, modkey)
+  SavedVendorMountModkey = modkey
+  UIDropDownMenu_SetText(modkeyMenu, SavedVendorMountModkey)
+  UpdateMountMacro(false)
+end
+
+--Create a pane for this addon in the Addons section of Options
+local function CreateInterfaceOptionFrame()
+  local panel = CreateFrame("Frame")
+  local title = panel:CreateFontString("ARTWORK", nil, "GameFontNormalLarge")
+  local modkeyText = panel:CreateFontString("ARTWORK", nil, "GameFontNormal")
+  local modkeyMenu = CreateFrame("Frame", "ModkeyMenuFrame", panel, "UIDropDownMenuTemplate")
+  local modkeyMenuOptions = {}
+  for _, i in pairs({ "shift", "alt", "ctrl" }) do
+    table.insert(modkeyMenuOptions,
+      { text = i, func = function() SetVendorModkey(modkeyMenu, i) end })
   end
-  if SavedMountCategoriesWeights == nil then
-    SavedMountCategoriesWeights = {}
-  end
+  UIDropDownMenu_Initialize(modkeyMenu, function() EasyMenu_Initialize(modkeyMenu, nil, modkeyMenuOptions) end)
+  SetVendorModkey(modkeyMenu, SavedVendorMountModkey)
+
+  panel.name = "WrathRandomMounter"
+  title:SetPoint("TOPLEFT")
+  title:SetText("Wrath Random Mounter")
+  modkeyText:SetPoint("TOPLEFT", title, "BOTTOMLEFT")
+  modkeyText:SetText("Select a modifier key to use a vendor mount")
+  modkeyMenu:SetPoint("TOPLEFT", modkeyText, "RIGHT")
+  UIDropDownMenu_SetText(modkeyMenu, SavedVendorMountModkey)
+  UIDropDownMenu_Initialize(modkeyMenu, function() EasyMenu_Initialize(modkeyMenu, nil, modkeyMenuOptions) end)
+  InterfaceOptions_AddCategory(panel)
 end
 
 --Handles the entering world event
 local function InitialStartupHandler(self, event, ...)
   InitialStartupOfSavedVariables()
+  CreateInterfaceOptionFrame()
   InitialStartup(self, event, ...)               --Gets the addon into a usable state
   wrm_wait(10, InitialStartup, self, event, ...) --Reruns startup incase parts of the API had not started yet (Updating Macros can fail if called too early)
 end
@@ -633,7 +666,7 @@ local function stringStarts(String, Start)
 end
 
 local function splitString(stringToSplit)
-  sep = "%s"
+  local sep = "%s"
   local t = {}
   for str in string.gmatch(stringToSplit, "([^" .. sep .. "]+)") do
     table.insert(t, str)
@@ -643,7 +676,7 @@ end
 
 local function SaveCategory(categoryName, categoryValue)
   print("set category: " .. categoryName .. ", " .. categoryValue)
-  mountCategoryFound = false
+  local mountCategoryFound = false
   for allMountCategory in pairs(AllMountCategories) do
     if string.lower(categoryName) == string.lower(allMountCategory) then
       mountCategoryFound = true
@@ -665,7 +698,7 @@ end
 
 local function SaveMount(mountName, mountValue)
   print("set mount: " .. mountName .. ", " .. mountValue)
-  mountFound = false
+  local mountFound = false
   for allMount in pairs(AllMounts) do
     if string.lower(mountName) == string.lower(allMount) then
       mountFound = true
@@ -689,7 +722,7 @@ end
 --/wrm Set Category Glider 0
 local function WRMHandler(parameter)
   if (string.len(parameter) > 0) then --If a parameter was supplied
-    parameterLower = string.lower(parameter)
+    local parameterLower = string.lower(parameter)
     if parameterLower == "list" then
       PrintMounts() --Prints players mounts to console
     elseif parameterLower == "listcategories" then
@@ -702,15 +735,15 @@ local function WRMHandler(parameter)
     elseif parameterLower == "zone" then
       print('Current Zone Category: ' .. CurrentZoneCategory)
     elseif stringStarts(parameterLower, "set") then
-      splitParameter = splitString(parameter)
+      local splitParameter = splitString(parameter)
       if string.lower(splitParameter[2]) == "category" then
-        setType = string.sub(parameter, 13, string.len(parameter)) --"Set Category"
+        local setType = string.sub(parameter, 13, string.len(parameter)) --"Set Category"
         setType = string.gsub(setType, splitParameter[tablelength(splitParameter)], "")
         setType = string.gsub(setType, '^%s*(.-)%s*$', '%1')
 
         SaveCategory(setType, splitParameter[tablelength(splitParameter)])
       elseif string.lower(splitParameter[2]) == "mount" then
-        setType = string.sub(parameter, 10, string.len(parameter)) --"Set Mount"
+        local setType = string.sub(parameter, 10, string.len(parameter)) --"Set Mount"
         setType = string.gsub(setType, splitParameter[tablelength(splitParameter)], "")
         setType = string.gsub(setType, '^%s*(.-)%s*$', '%1')
 
