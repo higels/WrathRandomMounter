@@ -409,11 +409,10 @@ local function UpdateMyPets()
   PetsKnown = {}                                  --Stores the API pets
   local companionType = "CRITTER"
   local numPets = GetNumCompanions(companionType) --total number of API pets
-  while numPets > 0 do
+  for i = 1, numPets, 1 do
     local creatureID, creatureName, creatureSpellID, icon, issummoned, petType = GetCompanionInfo(companionType,
-      petCounter)
+      i)
     table.insert(PetsKnown, { creatureSpellID, creatureName })
-    numPets = numPets - 1
   end
 
   -- Get additional pet data from Pets.lua
@@ -681,7 +680,7 @@ local wrmHandlerMap = {
 --Captures console commands that are entered
 --/wrm Set Category Glider 0
 local function WRMHandler(parameter)
-  if not parameter then
+  if not parameter or parameter == '' then
     wrmWait(0.1, UpdateMountMacro, false)
     return
   end
@@ -694,7 +693,7 @@ local function WRMHandler(parameter)
     local lcSplitParamss = splitString(string.lower(parameter))
     local splitParams = splitString(parameter)
     if lcSplitParamss[1] ~= "set" then
-      print('Parameter was: ' .. parameter) --Print a list of valid command to the console
+      print('Parameter was: XX' .. parameter .. 'XX') --Print a list of valid command to the console
       print(wrmUsage)
       return
     end
