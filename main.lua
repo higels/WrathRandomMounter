@@ -693,7 +693,7 @@ local function WRMHandler(parameter)
     local lcSplitParamss = splitString(string.lower(parameter))
     local splitParams = splitString(parameter)
     if lcSplitParamss[1] ~= "set" then
-      print('Parameter was: XX' .. parameter .. 'XX') --Print a list of valid command to the console
+      print('Parameter was: ' .. parameter) --Print a list of valid command to the console
       print(wrmUsage)
       return
     end
